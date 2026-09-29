@@ -3,99 +3,85 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>What to watch next</title>
+<title>CineMatch: find your next movie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#F1F3F8;--panel:#fff;--ink:#12172B;--muted:#5B6482;--line:#D9DEEA;--accent:#4338CA;--accent-ink:#fff;--star:#F5A524;--chip:#E8EBF6;box-sizing:border-box}
-@media (prefers-color-scheme:dark){:root{--bg:#0F1220;--panel:#171B30;--ink:#EEF0FA;--muted:#9AA3C4;--line:#2A3050;--accent:#8B8CFF;--accent-ink:#0F1220;--chip:#232948}}
+:root{--bg:#0d0d0d;--nav:#000;--card:#1a1a1a;--line:#2e2e2e;--ink:#fff;--muted:#a3a3a3;--gold:#F5C518;--blue:#5799EF;box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Source Sans 3",system-ui,sans-serif}
-h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0;line-height:1.15}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 Roboto,system-ui,sans-serif}
 button{font:inherit;color:inherit;cursor:pointer}
-:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.wrap{max-width:1080px;margin:0 auto;padding:40px 20px 64px}
-header p{color:var(--muted);max-width:52ch;margin:10px 0 0}
-h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:700;letter-spacing:-.02em}
-main{display:grid;gap:24px;margin-top:32px;grid-template-columns:1fr}
-@media(min-width:860px){main{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);align-items:start}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
-.panel h2{font-size:1.25rem;margin-bottom:14px}
-.search{position:relative}
-.search input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
-#suggest{position:absolute;left:0;right:0;top:100%;margin:6px 0 0;padding:4px;list-style:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;z-index:5;max-height:260px;overflow:auto}
-#suggest[hidden]{display:none}
-#suggest li{padding:9px 10px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
-#suggest li:hover,#suggest li.active{background:var(--chip)}
-#suggest small{color:var(--muted)}
-.examples{margin:12px 0 4px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--muted);font-size:.9rem}
-.examples button,.linkbtn{border:1px solid var(--line);background:none;border-radius:999px;padding:4px 12px;font-size:.9rem}
-.examples button:hover{background:var(--chip)}
-#mine{list-style:none;margin:14px 0 0;padding:0}
-#mine li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:12px 0;border-top:1px solid var(--line)}
-#mine .t{font-weight:600}
-#mine .g{grid-column:1;color:var(--muted);font-size:.85rem}
-.stars{grid-column:2;grid-row:1/3;display:flex;align-items:center;gap:0}
-.stars button{border:0;background:none;padding:2px;font-size:1.35rem;line-height:1;color:var(--line)}
-.stars button.on{color:var(--star)}
-.rm{border:0;background:none;color:var(--muted);font-size:1.2rem;padding:2px 6px}
-.empty{color:var(--muted);margin:16px 0 0}
-.tune{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
-.tune label{display:block;font-weight:600;margin-bottom:6px}
-.tune input{width:100%;accent-color:var(--accent)}
-.tune div{display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem}
-#results{display:grid;gap:14px;grid-template-columns:1fr;margin:0;padding:0;list-style:none}
-@media(min-width:1000px){ #results{grid-template-columns:1fr 1fr}}
-.ticket{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;position:relative;min-height:132px}
-.ticket .main{flex:1;padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:8px}
-.ticket h3{font-size:1.1rem}
-.tags{display:flex;flex-wrap:wrap;gap:6px}
-.tags span{background:var(--chip);border-radius:6px;padding:1px 8px;font-size:.8rem}
-.ticket .seen{margin-top:auto;align-self:flex-start;border:1px solid var(--line);background:none;border-radius:8px;padding:3px 10px;font-size:.85rem}
-.ticket .seen:hover{background:var(--chip)}
-.stub{width:92px;border-left:2px dashed var(--line);padding:14px 10px;display:flex;flex-direction:column;justify-content:center;gap:8px;text-align:center;font-size:.8rem;color:var(--muted)}
-.stub b{color:var(--ink);font-size:1.05rem;font-family:"Bricolage Grotesque",system-ui,sans-serif}
-.ticket::before,.ticket::after{content:"";position:absolute;right:85px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
-.ticket::before{top:-8px;clip-path:inset(50% 0 0 0)}
-.ticket::after{bottom:-8px;clip-path:inset(0 0 50% 0)}
-.bar{height:6px;border-radius:3px;background:var(--chip);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
-.msg{color:var(--muted);margin:0}
-.msg.err{color:#C0392B}
-@media(prefers-reduced-motion:reduce){.bar i{transition:none}}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.nav{position:sticky;top:0;z-index:20;background:var(--nav);border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:center;padding:10px 20px}
+.logo{background:var(--gold);color:#000;font-weight:900;font-size:1.15rem;letter-spacing:-.01em;padding:2px 10px;border-radius:5px;white-space:nowrap}
+.search{position:relative;flex:1;max-width:560px}
+.search input{width:100%;padding:10px 14px;border-radius:6px;border:0;background:#fff;color:#000;font:inherit}
+.search ul{position:absolute;left:0;right:0;top:100%;margin:6px 0 0;padding:4px;list-style:none;background:#fff;color:#000;border-radius:6px;max-height:280px;overflow:auto}
+.search ul[hidden]{display:none}
+.search li{padding:9px 10px;border-radius:4px;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
+.search li:hover,.search li.active{background:#f2f2f2}
+.search small{color:#666}
+.hero{padding:44px 20px 28px;background:radial-gradient(900px 300px at 15% 0,#2b2405 0,transparent 70%),var(--bg)}
+.hero h1{margin:0;font-size:clamp(1.9rem,5vw,3rem);font-weight:900;letter-spacing:-.02em}
+.hero p{margin:10px 0 18px;color:var(--muted);max-width:56ch}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--muted)}
+.chips button{background:none;border:1px solid #444;border-radius:999px;padding:6px 14px}
+.chips button:hover{border-color:var(--gold);color:var(--gold)}
+section.row{padding:8px 20px 20px}
+.row h2{font-size:1.3rem;margin:14px 0 12px;padding-left:12px;border-left:4px solid var(--gold);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.row h2 label{font-size:.85rem;font-weight:400;color:var(--muted);display:flex;gap:8px;align-items:center}
+.row h2 input{accent-color:var(--gold);width:130px}
+.scroll{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 14px;scroll-snap-type:x proximity;list-style:none;margin:0}
+.card{flex:0 0 172px;background:var(--card);border-radius:8px;overflow:hidden;scroll-snap-align:start;display:flex;flex-direction:column}
+.card.small{flex-basis:140px}
+.poster{position:relative;aspect-ratio:2/3;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;overflow:hidden}
+.poster .em{position:absolute;top:14px;left:0;right:0;text-align:center;font-size:2.6rem;opacity:.9}
+.poster b{font-weight:900;font-size:1.05rem;line-height:1.1;text-shadow:0 2px 8px #000a}
+.poster .bar{position:absolute;left:0;bottom:0;height:4px;background:var(--gold);width:0;transition:width .5s}
+.info{padding:10px 10px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.rate{color:var(--gold);font-weight:700}.rate span{color:var(--muted);font-weight:400}
+.t{font-weight:500;line-height:1.25}.g{color:var(--muted);font-size:.8rem}
+.add{margin-top:auto;background:#2b2b2b;border:0;border-radius:6px;padding:7px;color:var(--blue);font-weight:500}
+.add:hover{background:#383838}
+.stars{display:flex;align-items:center}
+.stars button{background:none;border:0;padding:1px;font-size:1.15rem;color:#4a4a4a;line-height:1}
+.stars button.on{color:var(--gold)}
+.rm{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:0;background:#000b;color:#fff}
+.msg{color:var(--muted);padding:0 2px}.msg.err{color:#ff7b7b}
+footer{padding:24px 20px 48px;color:#6b6b6b;font-size:.85rem}
+@media(prefers-reduced-motion:reduce){.poster .bar{transition:none}}
+@media(max-width:560px){.logo{font-size:1rem}.nav{padding:10px 12px}.card{flex-basis:150px}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>What should you watch next?</h1>
-    <p>Rate a few movies you've already seen. We'll match them against what other viewers rated and which genres they share.</p>
-  </header>
+<nav class="nav">
+  <span class="logo">CineMatch</span>
+  <div class="search">
+    <input id="q" type="text" placeholder="Search movies to rate" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="suggest" aria-label="Search movies to rate">
+    <ul id="suggest" role="listbox" hidden></ul>
+  </div>
+</nav>
 
-  <main>
-    <section class="panel" aria-labelledby="h-mine">
-      <h2 id="h-mine">Movies you've seen</h2>
-      <div class="search">
-        <input id="q" type="text" placeholder="Search for a movie" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="suggest" aria-label="Search for a movie">
-        <ul id="suggest" role="listbox" hidden></ul>
-      </div>
-      <div class="examples" id="examples">Or start with:</div>
-      <ul id="mine"></ul>
-      <p class="empty" id="mine-empty">Nothing added yet. Search for a movie above, then give it a star rating.</p>
-      <div class="tune">
-        <label for="alpha">What should suggestions lean on?</label>
-        <input id="alpha" type="range" min="0" max="1" step="0.1" value="0.5">
-        <div><span>Shared genres</span><span>Other viewers' ratings</span></div>
-      </div>
-    </section>
+<header class="hero">
+  <h1>Find your next favorite movie</h1>
+  <p>Rate a few movies you've watched. We compare them with what thousands of other viewers rated and the genres they share.</p>
+  <div class="chips" id="examples">Try a taste profile:</div>
+</header>
 
-    <section class="panel" aria-labelledby="h-picks" aria-live="polite">
-      <h2 id="h-picks">Your picks</h2>
-      <p class="msg" id="picks-msg">Add a movie and rate it. Your picks appear here.</p>
-      <ul id="results"></ul>
-    </section>
-  </main>
-</div>
+<section class="row" aria-labelledby="h-mine">
+  <h2 id="h-mine">Your ratings</h2>
+  <p class="msg" id="mine-empty">Search for a movie above or pick a taste profile to get started.</p>
+  <ul class="scroll" id="mine"></ul>
+</section>
+
+<section class="row" aria-labelledby="h-picks" aria-live="polite">
+  <h2 id="h-picks">Top picks for you
+    <label for="alpha">Genres <input id="alpha" type="range" min="0" max="1" step="0.1" value="0.5"> Viewer ratings</label>
+  </h2>
+  <p class="msg" id="picks-msg">Rate at least one movie and your picks will show up here.</p>
+  <ul class="scroll" id="results"></ul>
+</section>
+<footer>CineMatch is a student project. Recommendations use cosine similarity on ratings and genres.</footer>
 
 <script>
 const MOVIES = {{ movies|tojson }};
@@ -104,90 +90,86 @@ const EXAMPLES = {
   "Romance fan": {"Titanic":5,"The Notebook":5,"La La Land":4,"Get Out":1},
   "Family night": {"Toy Story":5,"Coco":5,"Up":4,"The Conjuring":1}
 };
+const EMOJI = {Action:"💥",Adventure:"🧭","Sci-Fi":"🚀",Animation:"🎨",Children:"🧸",Comedy:"😂",Crime:"🕵️",Drama:"🎭",Horror:"👻",Romance:"💘",Thriller:"🔪",Musical:"🎶",Fantasy:"✨"};
 const $ = id => document.getElementById(id);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); kids.forEach(k => e.append(k)); return e; };
 const byTitle = Object.fromEntries(MOVIES.map(m => [m.title, m]));
-let mine = {};       // title -> rating (1-5)
-let timer = null;
+let mine = {}, timer = null;
 
-/* ---------- search ---------- */
+function poster(title, genres, extra) {
+  let h = 0; for (const c of title) h = (h * 31 + c.charCodeAt(0)) % 360;
+  const p = el("div", { className: "poster" }, el("span", { className: "em", textContent: EMOJI[genres.split("|")[0]] || "🎬" }), el("b", { textContent: title }));
+  p.style.background = `linear-gradient(160deg,hsl(${h},55%,34%),hsl(${(h + 55) % 360},60%,12%))`;
+  if (extra) p.append(extra);
+  return p;
+}
+
+/* search */
 const q = $("q"), list = $("suggest");
 function showSuggestions() {
   const term = q.value.trim().toLowerCase();
-  const hits = MOVIES.filter(m => !(m.title in mine) && (m.title.toLowerCase().includes(term) || m.genres.toLowerCase().includes(term))).slice(0, 6);
+  const hits = MOVIES.filter(m => !(m.title in mine) && (m.title.toLowerCase().includes(term) || m.genres.toLowerCase().includes(term))).slice(0, 7);
   list.replaceChildren(...hits.map((m, i) => {
     const li = el("li", { role: "option", className: i === 0 && term ? "active" : "" }, el("span", { textContent: m.title }), el("small", { textContent: m.genres.split("|")[0] }));
     li.addEventListener("mousedown", e => { e.preventDefault(); add(m.title, 4); });
     return li;
   }));
-  list.hidden = hits.length === 0;
-  q.setAttribute("aria-expanded", String(!list.hidden));
+  list.hidden = !hits.length; q.setAttribute("aria-expanded", String(!list.hidden));
 }
-q.addEventListener("input", showSuggestions);
-q.addEventListener("focus", showSuggestions);
+q.addEventListener("input", showSuggestions); q.addEventListener("focus", showSuggestions);
 q.addEventListener("blur", () => { list.hidden = true; });
 q.addEventListener("keydown", e => {
-  if (e.key === "Enter") { const first = list.querySelector("li"); if (first) first.dispatchEvent(new MouseEvent("mousedown")); }
+  if (e.key === "Enter") { const f = list.querySelector("li"); if (f) f.dispatchEvent(new MouseEvent("mousedown")); }
   if (e.key === "Escape") list.hidden = true;
 });
-
 function add(title, rating) { mine[title] = rating; q.value = ""; list.hidden = true; renderMine(); refresh(); }
 
-/* ---------- my ratings ---------- */
+/* your ratings */
 function renderMine() {
   const items = Object.entries(mine).map(([title, rating]) => {
+    const rm = el("button", { type: "button", className: "rm", textContent: "×", ariaLabel: `Remove ${title}` });
+    rm.addEventListener("click", () => { delete mine[title]; renderMine(); refresh(); });
     const stars = el("div", { className: "stars", role: "group", ariaLabel: `Rating for ${title}` });
     for (let i = 1; i <= 5; i++) {
-      const b = el("button", { type: "button", textContent: "★", className: i <= rating ? "on" : "", ariaLabel: `${i} star${i > 1 ? "s" : ""}` });
+      const b = el("button", { type: "button", textContent: "★", className: i <= rating ? "on" : "", ariaLabel: `${i} stars` });
       b.addEventListener("click", () => { mine[title] = i; renderMine(); refresh(); });
       stars.append(b);
     }
-    const rm = el("button", { type: "button", className: "rm", textContent: "×", ariaLabel: `Remove ${title}` });
-    rm.addEventListener("click", () => { delete mine[title]; renderMine(); refresh(); });
-    stars.append(rm);
-    return el("li", {}, el("span", { className: "t", textContent: title }), stars, el("span", { className: "g", textContent: byTitle[title].genres.split("|").join(", ") }));
+    const pos = poster(title, byTitle[title].genres, rm);
+    return el("li", { className: "card small" }, pos, el("div", { className: "info" }, stars));
   });
-  $("mine").replaceChildren(...items);
-  $("mine-empty").hidden = items.length > 0;
+  $("mine").replaceChildren(...items); $("mine-empty").hidden = items.length > 0;
 }
-
-Object.keys(EXAMPLES).forEach(name => {
-  const b = el("button", { type: "button", textContent: name });
-  b.addEventListener("click", () => { mine = { ...EXAMPLES[name] }; renderMine(); refresh(); });
+Object.keys(EXAMPLES).forEach(n => {
+  const b = el("button", { type: "button", textContent: n });
+  b.addEventListener("click", () => { mine = { ...EXAMPLES[n] }; renderMine(); refresh(); });
   $("examples").append(b);
 });
 
-/* ---------- picks ---------- */
+/* picks */
 function refresh() { clearTimeout(timer); timer = setTimeout(fetchPicks, 200); }
 $("alpha").addEventListener("input", refresh);
-
 async function fetchPicks() {
   const msg = $("picks-msg"), out = $("results");
-  if (!Object.keys(mine).length) { out.replaceChildren(); msg.hidden = false; msg.className = "msg"; msg.textContent = "Add a movie and rate it. Your picks appear here."; return; }
+  if (!Object.keys(mine).length) { out.replaceChildren(); msg.hidden = false; msg.className = "msg"; msg.textContent = "Rate at least one movie and your picks will show up here."; return; }
   try {
-    const res = await fetch("/api/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ratings: mine, alpha: parseFloat($("alpha").value), n: 6 }) });
+    const res = await fetch("/api/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ratings: mine, alpha: parseFloat($("alpha").value), n: 10 }) });
     if (!res.ok) throw new Error(res.status);
     const { results } = await res.json();
-    msg.hidden = true;
-    out.replaceChildren(...results.map(ticket));
-    requestAnimationFrame(() => out.querySelectorAll(".bar i").forEach(i => i.style.width = i.dataset.w));
-  } catch (e) {
-    msg.hidden = false; msg.className = "msg err";
-    msg.textContent = "Couldn't get picks. Check that web_app.py is still running, then try again.";
-  }
+    msg.hidden = true; out.replaceChildren(...results.map(card));
+    requestAnimationFrame(() => out.querySelectorAll(".bar").forEach(b => b.style.width = b.dataset.w));
+  } catch (e) { msg.hidden = false; msg.className = "msg err"; msg.textContent = "Couldn't load picks. Check that the server is running, then try again."; }
 }
-
-function ticket(r) {
-  const seen = el("button", { type: "button", className: "seen", textContent: "I've seen this" });
-  seen.addEventListener("click", () => add(r.title, 4));
-  const main = el("div", { className: "main" }, el("h3", { textContent: r.title }),
-    el("div", { className: "tags" }, ...r.genres.split("|").map(g => el("span", { textContent: g }))), seen);
-  const bar = el("div", { className: "bar" }, el("i", {})); bar.firstChild.dataset.w = Math.round(r.match * 100) + "%";
-  const stub = el("div", { className: "stub" }, el("span", { textContent: "Match" }), bar,
-    el("span", { textContent: "Viewers" }), el("b", { textContent: r.avg_rating ? "★ " + r.avg_rating.toFixed(1) : "–" }));
-  return el("li", { className: "ticket" }, main, stub);
+function card(r) {
+  const bar = el("i", { className: "bar" }); bar.dataset.w = Math.round(r.match * 100) + "%";
+  const add_ = el("button", { type: "button", className: "add", textContent: "+ I've seen this" });
+  add_.addEventListener("click", () => add(r.title, 4));
+  return el("li", { className: "card" }, poster(r.title, r.genres, bar),
+    el("div", { className: "info" },
+      el("div", { className: "rate" }, "★ " + (r.avg_rating ? r.avg_rating.toFixed(1) : "–"), el("span", { textContent: " / 5" })),
+      el("div", { className: "t", textContent: r.title }),
+      el("div", { className: "g", textContent: r.genres.split("|").join(", ") }), add_));
 }
-
 renderMine();
 </script>
 </body>
