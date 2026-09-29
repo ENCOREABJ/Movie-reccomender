@@ -1,0 +1,31 @@
+movieId,title,genres
+1,The Dark Knight,Action|Crime|Drama
+2,Inception,Action|Sci-Fi|Thriller
+3,The Matrix,Action|Sci-Fi
+4,Interstellar,Adventure|Drama|Sci-Fi
+5,Toy Story,Animation|Children|Comedy
+6,Finding Nemo,Animation|Children|Comedy
+7,The Lion King,Animation|Children|Drama
+8,Titanic,Drama|Romance
+9,The Notebook,Drama|Romance
+10,La La Land,Comedy|Drama|Romance
+11,The Godfather,Crime|Drama
+12,Pulp Fiction,Crime|Drama|Thriller
+13,Goodfellas,Crime|Drama
+14,Superbad,Comedy
+15,The Hangover,Comedy
+16,Step Brothers,Comedy
+17,Get Out,Horror|Thriller
+18,A Quiet Place,Horror|Sci-Fi|Thriller
+19,The Conjuring,Horror|Thriller
+20,Avengers: Endgame,Action|Adventure|Sci-Fi
+21,Iron Man,Action|Adventure|Sci-Fi
+22,Mad Max: Fury Road,Action|Adventure|Sci-Fi
+23,Forrest Gump,Comedy|Drama|Romance
+24,Shawshank Redemption,Crime|Drama
+25,Coco,Animation|Children|Fantasy
+26,Up,Adventure|Animation|Children
+27,Dangal,Action|Drama
+28,3 Idiots,Comedy|Drama
+29,Zindagi Na Milegi Dobara,Adventure|Comedy|Drama
+30,Lagaan,Drama|Musical
