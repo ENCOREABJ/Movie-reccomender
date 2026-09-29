@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What to watch next</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F1F3F8;--panel:#fff;--ink:#12172B;--muted:#5B6482;--line:#D9DEEA;--accent:#4338CA;--accent-ink:#fff;--star:#F5A524;--chip:#E8EBF6;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root{--bg:#0F1220;--panel:#171B30;--ink:#EEF0FA;--muted:#9AA3C4;--line:#2A3050;--accent:#8B8CFF;--accent-ink:#0F1220;--chip:#232948}}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Source Sans 3",system-ui,sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0;line-height:1.15}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 20px 64px}
+header p{color:var(--muted);max-width:52ch;margin:10px 0 0}
+h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:700;letter-spacing:-.02em}
+main{display:grid;gap:24px;margin-top:32px;grid-template-columns:1fr}
+@media(min-width:860px){main{grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);align-items:start}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.panel h2{font-size:1.25rem;margin-bottom:14px}
+.search{position:relative}
+.search input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);font:inherit}
+#suggest{position:absolute;left:0;right:0;top:100%;margin:6px 0 0;padding:4px;list-style:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;z-index:5;max-height:260px;overflow:auto}
+#suggest[hidden]{display:none}
+#suggest li{padding:9px 10px;border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+#suggest li:hover,#suggest li.active{background:var(--chip)}
+#suggest small{color:var(--muted)}
+.examples{margin:12px 0 4px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--muted);font-size:.9rem}
+.examples button,.linkbtn{border:1px solid var(--line);background:none;border-radius:999px;padding:4px 12px;font-size:.9rem}
+.examples button:hover{background:var(--chip)}
+#mine{list-style:none;margin:14px 0 0;padding:0}
+#mine li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:12px 0;border-top:1px solid var(--line)}
+#mine .t{font-weight:600}
+#mine .g{grid-column:1;color:var(--muted);font-size:.85rem}
+.stars{grid-column:2;grid-row:1/3;display:flex;align-items:center;gap:0}
+.stars button{border:0;background:none;padding:2px;font-size:1.35rem;line-height:1;color:var(--line)}
+.stars button.on{color:var(--star)}
+.rm{border:0;background:none;color:var(--muted);font-size:1.2rem;padding:2px 6px}
+.empty{color:var(--muted);margin:16px 0 0}
+.tune{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.tune label{display:block;font-weight:600;margin-bottom:6px}
+.tune input{width:100%;accent-color:var(--accent)}
+.tune div{display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem}
+#results{display:grid;gap:14px;grid-template-columns:1fr;margin:0;padding:0;list-style:none}
+@media(min-width:1000px){ #results{grid-template-columns:1fr 1fr}}
+.ticket{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:12px;position:relative;min-height:132px}
+.ticket .main{flex:1;padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.ticket h3{font-size:1.1rem}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tags span{background:var(--chip);border-radius:6px;padding:1px 8px;font-size:.8rem}
+.ticket .seen{margin-top:auto;align-self:flex-start;border:1px solid var(--line);background:none;border-radius:8px;padding:3px 10px;font-size:.85rem}
+.ticket .seen:hover{background:var(--chip)}
+.stub{width:92px;border-left:2px dashed var(--line);padding:14px 10px;display:flex;flex-direction:column;justify-content:center;gap:8px;text-align:center;font-size:.8rem;color:var(--muted)}
+.stub b{color:var(--ink);font-size:1.05rem;font-family:"Bricolage Grotesque",system-ui,sans-serif}
+.ticket::before,.ticket::after{content:"";position:absolute;right:85px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
+.ticket::before{top:-8px;clip-path:inset(50% 0 0 0)}
+.ticket::after{bottom:-8px;clip-path:inset(0 0 50% 0)}
+.bar{height:6px;border-radius:3px;background:var(--chip);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .4s}
+.msg{color:var(--muted);margin:0}
+.msg.err{color:#C0392B}
+@media(prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>What should you watch next?</h1>
+    <p>Rate a few movies you've already seen. We'll match them against what other viewers rated and which genres they share.</p>
+  </header>
+
+  <main>
+    <section class="panel" aria-labelledby="h-mine">
+      <h2 id="h-mine">Movies you've seen</h2>
+      <div class="search">
+        <input id="q" type="text" placeholder="Search for a movie" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="suggest" aria-label="Search for a movie">
+        <ul id="suggest" role="listbox" hidden></ul>
+      </div>
+      <div class="examples" id="examples">Or start with:</div>
+      <ul id="mine"></ul>
+      <p class="empty" id="mine-empty">Nothing added yet. Search for a movie above, then give it a star rating.</p>
+      <div class="tune">
+        <label for="alpha">What should suggestions lean on?</label>
+        <input id="alpha" type="range" min="0" max="1" step="0.1" value="0.5">
+        <div><span>Shared genres</span><span>Other viewers' ratings</span></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-picks" aria-live="polite">
+      <h2 id="h-picks">Your picks</h2>
+      <p class="msg" id="picks-msg">Add a movie and rate it. Your picks appear here.</p>
+      <ul id="results"></ul>
+    </section>
+  </main>
+</div>
+
+<script>
+const MOVIES = {{ movies|tojson }};
+const EXAMPLES = {
+  "Sci-fi fan": {"The Matrix":5,"Inception":5,"Interstellar":4,"Toy Story":2},
+  "Romance fan": {"Titanic":5,"The Notebook":5,"La La Land":4,"Get Out":1},
+  "Family night": {"Toy Story":5,"Coco":5,"Up":4,"The Conjuring":1}
+};
+const $ = id => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); kids.forEach(k => e.append(k)); return e; };
+const byTitle = Object.fromEntries(MOVIES.map(m => [m.title, m]));
+let mine = {};       // title -> rating (1-5)
+let timer = null;
+
+/* ---------- search ---------- */
+const q = $("q"), list = $("suggest");
+function showSuggestions() {
+  const term = q.value.trim().toLowerCase();
+  const hits = MOVIES.filter(m => !(m.title in mine) && (m.title.toLowerCase().includes(term) || m.genres.toLowerCase().includes(term))).slice(0, 6);
+  list.replaceChildren(...hits.map((m, i) => {
+    const li = el("li", { role: "option", className: i === 0 && term ? "active" : "" }, el("span", { textContent: m.title }), el("small", { textContent: m.genres.split("|")[0] }));
+    li.addEventListener("mousedown", e => { e.preventDefault(); add(m.title, 4); });
+    return li;
+  }));
+  list.hidden = hits.length === 0;
+  q.setAttribute("aria-expanded", String(!list.hidden));
+}
+q.addEventListener("input", showSuggestions);
+q.addEventListener("focus", showSuggestions);
+q.addEventListener("blur", () => { list.hidden = true; });
+q.addEventListener("keydown", e => {
+  if (e.key === "Enter") { const first = list.querySelector("li"); if (first) first.dispatchEvent(new MouseEvent("mousedown")); }
+  if (e.key === "Escape") list.hidden = true;
+});
+
+function add(title, rating) { mine[title] = rating; q.value = ""; list.hidden = true; renderMine(); refresh(); }
+
+/* ---------- my ratings ---------- */
+function renderMine() {
+  const items = Object.entries(mine).map(([title, rating]) => {
+    const stars = el("div", { className: "stars", role: "group", ariaLabel: `Rating for ${title}` });
+    for (let i = 1; i <= 5; i++) {
+      const b = el("button", { type: "button", textContent: "★", className: i <= rating ? "on" : "", ariaLabel: `${i} star${i > 1 ? "s" : ""}` });
+      b.addEventListener("click", () => { mine[title] = i; renderMine(); refresh(); });
+      stars.append(b);
+    }
+    const rm = el("button", { type: "button", className: "rm", textContent: "×", ariaLabel: `Remove ${title}` });
+    rm.addEventListener("click", () => { delete mine[title]; renderMine(); refresh(); });
+    stars.append(rm);
+    return el("li", {}, el("span", { className: "t", textContent: title }), stars, el("span", { className: "g", textContent: byTitle[title].genres.split("|").join(", ") }));
+  });
+  $("mine").replaceChildren(...items);
+  $("mine-empty").hidden = items.length > 0;
+}
+
+Object.keys(EXAMPLES).forEach(name => {
+  const b = el("button", { type: "button", textContent: name });
+  b.addEventListener("click", () => { mine = { ...EXAMPLES[name] }; renderMine(); refresh(); });
+  $("examples").append(b);
+});
+
+/* ---------- picks ---------- */
+function refresh() { clearTimeout(timer); timer = setTimeout(fetchPicks, 200); }
+$("alpha").addEventListener("input", refresh);
+
+async function fetchPicks() {
+  const msg = $("picks-msg"), out = $("results");
+  if (!Object.keys(mine).length) { out.replaceChildren(); msg.hidden = false; msg.className = "msg"; msg.textContent = "Add a movie and rate it. Your picks appear here."; return; }
+  try {
+    const res = await fetch("/api/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ratings: mine, alpha: parseFloat($("alpha").value), n: 6 }) });
+    if (!res.ok) throw new Error(res.status);
+    const { results } = await res.json();
+    msg.hidden = true;
+    out.replaceChildren(...results.map(ticket));
+    requestAnimationFrame(() => out.querySelectorAll(".bar i").forEach(i => i.style.width = i.dataset.w));
+  } catch (e) {
+    msg.hidden = false; msg.className = "msg err";
+    msg.textContent = "Couldn't get picks. Check that web_app.py is still running, then try again.";
+  }
+}
+
+function ticket(r) {
+  const seen = el("button", { type: "button", className: "seen", textContent: "I've seen this" });
+  seen.addEventListener("click", () => add(r.title, 4));
+  const main = el("div", { className: "main" }, el("h3", { textContent: r.title }),
+    el("div", { className: "tags" }, ...r.genres.split("|").map(g => el("span", { textContent: g }))), seen);
+  const bar = el("div", { className: "bar" }, el("i", {})); bar.firstChild.dataset.w = Math.round(r.match * 100) + "%";
+  const stub = el("div", { className: "stub" }, el("span", { textContent: "Match" }), bar,
+    el("span", { textContent: "Viewers" }), el("b", { textContent: r.avg_rating ? "★ " + r.avg_rating.toFixed(1) : "–" }));
+  return el("li", { className: "ticket" }, main, stub);
+}
+
+renderMine();
+</script>
+</body>
+</html>
