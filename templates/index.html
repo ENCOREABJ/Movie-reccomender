@@ -37,6 +37,9 @@ section.row{padding:8px 20px 20px}
 .poster{position:relative;aspect-ratio:2/3;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;overflow:hidden}
 .poster .em{position:absolute;top:14px;left:0;right:0;text-align:center;font-size:2.6rem;opacity:.9}
 .poster b{font-weight:900;font-size:1.05rem;line-height:1.1;text-shadow:0 2px 8px #000a}
+.poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.poster.has b,.poster.has .em{display:none}
+.poster .bar,.rm{z-index:2}
 .poster .bar{position:absolute;left:0;bottom:0;height:4px;background:var(--gold);width:0;transition:width .5s}
 .info{padding:10px 10px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
 .rate{color:var(--gold);font-weight:700}.rate span{color:var(--muted);font-weight:400}
@@ -49,7 +52,10 @@ section.row{padding:8px 20px 20px}
 .rm{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:0;background:#000b;color:#fff}
 .msg{color:var(--muted);padding:0 2px}.msg.err{color:#ff7b7b}
 footer{padding:24px 20px 48px;color:#6b6b6b;font-size:.85rem}
-@media(prefers-reduced-motion:reduce){.poster .bar{transition:none}}
+@media(prefers-reduced-motion:reduce){.poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.poster.has b,.poster.has .em{display:none}
+.poster .bar,.rm{z-index:2}
+.poster .bar{transition:none}}
 @media(max-width:560px){.logo{font-size:1rem}.nav{padding:10px 12px}.card{flex-basis:150px}}
 </style>
 </head>
@@ -81,25 +87,31 @@ footer{padding:24px 20px 48px;color:#6b6b6b;font-size:.85rem}
   <p class="msg" id="picks-msg">Rate at least one movie and your picks will show up here.</p>
   <ul class="scroll" id="results"></ul>
 </section>
-<footer>CineMatch is a student project. Recommendations use cosine similarity on ratings and genres.</footer>
+<footer>CineMatch is a student project. Recommendations use cosine similarity on ratings and genres.<br>This product uses the TMDB API but is not endorsed or certified by TMDB.</footer>
 
 <script>
 const MOVIES = {{ movies|tojson }};
-const EXAMPLES = {
-  "Sci-fi fan": {"The Matrix":5,"Inception":5,"Interstellar":4,"Toy Story":2},
-  "Romance fan": {"Titanic":5,"The Notebook":5,"La La Land":4,"Get Out":1},
-  "Family night": {"Toy Story":5,"Coco":5,"Up":4,"The Conjuring":1}
-};
+const PROFILES = {"Sci-fi fan": ["Sci-Fi", "Romance"], "Romance fan": ["Romance", "Horror"], "Family night": ["Animation", "Horror"]};
+function topIn(genre, k) { return MOVIES.filter(m => m.genres.split("|").includes(genre)).sort((a, b) => b.n - a.n).slice(0, k).map(m => m.title); }
+function profile(like, dislike) {
+  const out = {}; topIn(like, 4).forEach((t, i) => out[t] = i < 2 ? 5 : 4);
+  topIn(dislike, 2).forEach(t => { if (!(t in out)) out[t] = 1; }); return out;
+}
 const EMOJI = {Action:"💥",Adventure:"🧭","Sci-Fi":"🚀",Animation:"🎨",Children:"🧸",Comedy:"😂",Crime:"🕵️",Drama:"🎭",Horror:"👻",Romance:"💘",Thriller:"🔪",Musical:"🎶",Fantasy:"✨"};
 const $ = id => document.getElementById(id);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); kids.forEach(k => e.append(k)); return e; };
 const byTitle = Object.fromEntries(MOVIES.map(m => [m.title, m]));
 let mine = {}, timer = null;
 
-function poster(title, genres, extra) {
+function poster(title, genres, extra, path) {
   let h = 0; for (const c of title) h = (h * 31 + c.charCodeAt(0)) % 360;
   const p = el("div", { className: "poster" }, el("span", { className: "em", textContent: EMOJI[genres.split("|")[0]] || "🎬" }), el("b", { textContent: title }));
   p.style.background = `linear-gradient(160deg,hsl(${h},55%,34%),hsl(${(h + 55) % 360},60%,12%))`;
+  if (path) {
+    const img = el("img", { alt: title, loading: "lazy", src: "https://image.tmdb.org/t/p/w342" + path });
+    img.onload = () => p.classList.add("has"); img.onerror = () => img.remove();
+    p.prepend(img);
+  }
   if (extra) p.append(extra);
   return p;
 }
@@ -135,14 +147,14 @@ function renderMine() {
       b.addEventListener("click", () => { mine[title] = i; renderMine(); refresh(); });
       stars.append(b);
     }
-    const pos = poster(title, byTitle[title].genres, rm);
+    const pos = poster(title, byTitle[title].genres, rm, byTitle[title].poster_path);
     return el("li", { className: "card small" }, pos, el("div", { className: "info" }, stars));
   });
   $("mine").replaceChildren(...items); $("mine-empty").hidden = items.length > 0;
 }
-Object.keys(EXAMPLES).forEach(n => {
+Object.keys(PROFILES).forEach(n => {
   const b = el("button", { type: "button", textContent: n });
-  b.addEventListener("click", () => { mine = { ...EXAMPLES[n] }; renderMine(); refresh(); });
+  b.addEventListener("click", () => { mine = profile(...PROFILES[n]); renderMine(); refresh(); });
   $("examples").append(b);
 });
 
@@ -164,7 +176,7 @@ function card(r) {
   const bar = el("i", { className: "bar" }); bar.dataset.w = Math.round(r.match * 100) + "%";
   const add_ = el("button", { type: "button", className: "add", textContent: "+ I've seen this" });
   add_.addEventListener("click", () => add(r.title, 4));
-  return el("li", { className: "card" }, poster(r.title, r.genres, bar),
+  return el("li", { className: "card" }, poster(r.title, r.genres, bar, r.poster_path),
     el("div", { className: "info" },
       el("div", { className: "rate" }, "★ " + (r.avg_rating ? r.avg_rating.toFixed(1) : "–"), el("span", { textContent: " / 5" })),
       el("div", { className: "t", textContent: r.title }),
