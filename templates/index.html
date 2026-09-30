@@ -34,7 +34,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .btn.play{background:#fff;color:#000}
 .hposter{width:200px;flex:none;border-radius:8px;overflow:hidden;box-shadow:0 20px 60px #000a;display:none}
 @media(min-width:760px){.hposter{display:block}}
-.quick{padding:6px 4% 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--muted)}
+.ai{padding:22px 4% 8px}.ai-box{display:flex;gap:8px;max-width:900px}.ai-box input{flex:1;padding:12px 14px;border:1px solid #555;border-radius:5px;background:#1b1b1b;color:#fff;font:inherit}.ai-box button{background:var(--red);border:0;border-radius:5px;padding:12px 18px;font-weight:700}.ai-hint{color:var(--muted);font-size:.85rem;margin:7px 0}.ai-status{color:var(--muted);margin-top:8px}.quick{padding:6px 4% 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--muted)}
 .quick button{background:none;border:1px solid #555;border-radius:999px;padding:5px 14px}.quick button:hover{border-color:#fff;color:#fff}
 .row{padding:4px 4%}
 .row h2{font-size:1.2rem;font-weight:700;margin:18px 0 6px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
@@ -97,8 +97,15 @@ footer{padding:28px 4% 48px;color:#777;font-size:.85rem}
   </div>
 </header>
 
+<div class="ai">
+  <h2 style="margin:0 0 8px;font-size:1.2rem">✨ Ask CineMind</h2>
+  <div class="ai-box"><input id="aiq" type="text" placeholder="e.g. Something like Interstellar, but darker and more action-packed"><button id="aib" type="button">Find movies</button></div>
+  <p class="ai-hint">Describe a mood, genre, movie, actor, or anything you feel like watching.</p>
+  <div id="aistatus" class="ai-status" aria-live="polite"></div>
+</div>
 <div class="quick" id="examples">New here? Try a taste profile:</div>
 <main>
+  <div id="aiRow"></div>
   <div id="mineRow"></div>
   <section class="row" id="picksRow" hidden aria-live="polite">
     <h2>Top picks for you <label for="alpha">Genres <input id="alpha" type="range" min="0" max="1" step="0.1" value="0.5"> Viewer ratings</label></h2>
@@ -122,7 +129,7 @@ footer{padding:28px 4% 48px;color:#777;font-size:.85rem}
 const MOVIES = {{ movies|tojson }};
 const byTitle = Object.fromEntries(MOVIES.map(m => [m.title, m]));
 const PROFILES = {"Sci-fi fan": ["Sci-Fi", "Romance"], "Romance fan": ["Romance", "Horror"], "Family night": ["Animation", "Horror"], "Thriller fan": ["Thriller", "Musical"]};
-const EMOJI = {Action:"💥",Adventure:"🧭","Sci-Fi":"🚀",Animation:"🎨",Children:"🧸",Comedy:"😂",Crime:"🕵️",Drama:"🎭",Horror:"👻",Romance:"💘",Thriller:"🔪",Musical:"🎶",Fantasy:"✨"};
+const EMOJI = {Action:"💥",Adventure:"🧭","Sci-Fi":"🚀",Animation:"🎨",Children:"🧸",Comedy:"😂",Crime:"🕵️",Drama:"🎭",Horror:"👻",Romance:"💘",Thriller:"🔪",Musical:"🎶",Fantasy:"✨",Family:"👨‍👩‍👧",Mystery:"🔎",War:"⚔️"};
 const $ = id => document.getElementById(id);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); kids.forEach(k => e.append(k)); return e; };
 const yr = t => (t.match(/\((\d{4})\)$/) || [])[1] || "";
@@ -211,6 +218,23 @@ async function openModal(t) {
   } catch (e) { $("dsim").textContent = "Couldn't load similar movies."; }
 }
 
+/* AI recommendations */
+async function askCineMind() {
+  const prompt=$("aiq").value.trim(); if(!prompt) return;
+  $("aistatus").textContent="CineMind is understanding your taste…";
+  $("aiRow").replaceChildren(el("section",{className:"row"},el("h2",{textContent:"AI picks for you"}),skeleton()));
+  try {
+    const res=await fetch("/api/ai-recommend",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt,n:12})});
+    const data=await res.json(); if(!res.ok) throw new Error(data.error||res.status);
+    const prefs=(data.preferences?.genres||[]).join(" · ");
+    $("aistatus").textContent=(data.source==="openai"?"AI interpreted your request":"Smart local parser interpreted your request")+(prefs?" — "+prefs:"");
+    const section=el("section",{className:"row"},el("h2",{textContent:"AI picks for you"}),scroller(data.results.map(x=>byTitle[x.title]).filter(Boolean)));
+    $("aiRow").replaceChildren(section);
+  } catch(e) { $("aistatus").textContent="Couldn’t generate AI picks. Check the server and try again."; }
+}
+$("aib").addEventListener("click",askCineMind);
+$("aiq").addEventListener("keydown",e=>{if(e.key==="Enter") askCineMind();});
+
 /* my ratings + picks */
 function update() {
   const items = Object.keys(mine).map(t => byTitle[t]).filter(Boolean);
@@ -241,4 +265,3 @@ Object.entries(PROFILES).forEach(([name, [like, dislike]]) => {
 </script>
 </body>
 </html>
-
