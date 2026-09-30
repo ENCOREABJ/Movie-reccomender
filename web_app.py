@@ -9,8 +9,8 @@ engine = MovieRecommender()  # loaded once at startup
 
 @app.get("/")
 def home():
-    movies = engine.movies.fillna({"avg_rating": 0}).sort_values("title")
-    return render_template("index.html", movies=movies[["title", "genres"]].to_dict("records"))
+    movies = engine.movies.fillna({"avg_rating": 0, "num_ratings": 0}).sort_values("title")
+    return render_template("index.html", movies=movies.rename(columns={"num_ratings": "n"})[["title", "genres", "n", "poster_path"]].fillna({"n": 0}).to_dict("records"))
 
 
 @app.post("/api/recommend")
