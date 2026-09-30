@@ -152,14 +152,14 @@ const skeleton = () => el("ul", { className: "scroll" }, ...Array.from({ length:
 
 /* browse rows */
 const med = MOVIES.map(m => m.n).sort((a, b) => a - b)[MOVIES.length >> 1];
-const top = (f, k = 14) => MOVIES.filter(f).sort((a, b) => b.n - a.n).slice(0, k);
-const ROWS = [["Popular on CineMind", top(() => true)], ["Top rated", MOVIES.filter(m => m.n >= med).sort((a, b) => b.avg_rating - a.avg_rating).slice(0, 14)],
-  ...["Action", "Comedy", "Romance", "Sci-Fi", "Animation", "Crime", "Horror", "Drama"].map(g => [g + " movies", top(m => m.genres.split("|").includes(g))])].filter(r => r[1].length >= 4);
+const topBy = (f, k = 14) => MOVIES.filter(f).sort((a, b) => b.n - a.n).slice(0, k);
+const ROWS = [["Popular on CineMind", topBy(() => true)], ["Top rated", MOVIES.filter(m => m.n >= med).sort((a, b) => b.avg_rating - a.avg_rating).slice(0, 14)],
+  ...["Action", "Comedy", "Romance", "Sci-Fi", "Animation", "Crime", "Horror", "Drama"].map(g => [g + " movies", topBy(m => m.genres.split("|").includes(g))])].filter(r => r[1].length >= 4);
 $("rows").append(...ROWS.map(([t, items]) => el("section", { className: "row" }, el("h2", { textContent: t }), scroller(items))));
 
 /* hero */
 const pool = MOVIES.filter(src).sort((a, b) => b.n - a.n).slice(0, 12);
-const heroList = pool.length ? pool : top(() => true, 8);
+const heroList = pool.length ? pool : topBy(() => true, 8);
 let hi = Math.floor(Math.random() * heroList.length), feat;
 function setHero(m) {
   feat = m;
@@ -241,3 +241,4 @@ Object.entries(PROFILES).forEach(([name, [like, dislike]]) => {
 </script>
 </body>
 </html>
+
