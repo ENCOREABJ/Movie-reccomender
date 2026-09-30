@@ -87,7 +87,7 @@ footer{padding:24px 20px 48px;color:#6b6b6b;font-size:.85rem}
   <p class="msg" id="picks-msg">Rate at least one movie and your picks will show up here.</p>
   <ul class="scroll" id="results"></ul>
 </section>
-<footer>CineMatch is a student project. Recommendations use cosine similarity on ratings and genres.<br>This product uses the TMDB API but is not endorsed or certified by TMDB.</footer>
+<footer>CineMatch is a student project. Recommendations use cosine similarity on ratings and genres.<br>Poster images come from OMDb and TMDB. This product is not endorsed or certified by TMDB.</footer>
 
 <script>
 const MOVIES = {{ movies|tojson }};
@@ -107,8 +107,8 @@ function poster(title, genres, extra, path) {
   let h = 0; for (const c of title) h = (h * 31 + c.charCodeAt(0)) % 360;
   const p = el("div", { className: "poster" }, el("span", { className: "em", textContent: EMOJI[genres.split("|")[0]] || "🎬" }), el("b", { textContent: title }));
   p.style.background = `linear-gradient(160deg,hsl(${h},55%,34%),hsl(${(h + 55) % 360},60%,12%))`;
-  if (path) {
-    const img = el("img", { alt: title, loading: "lazy", src: "https://image.tmdb.org/t/p/w342" + path });
+  if (path && (path.startsWith("/") || path.startsWith("http"))) {
+    const img = el("img", { alt: title, loading: "lazy", src: path.startsWith("http") ? path : "https://image.tmdb.org/t/p/w342" + path });
     img.onload = () => p.classList.add("has"); img.onerror = () => img.remove();
     p.prepend(img);
   }
