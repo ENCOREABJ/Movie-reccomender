@@ -3,3 +3,6 @@ numpy
 scikit-learn
 flask
 gunicorn
+openai>=1.0.0
+
+python-dotenv
