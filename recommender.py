@@ -1,64 +1,64 @@
-"""
-Movie Recommendation Engine
----------------------------
-Two approaches, both built on cosine similarity:
+"""CineMind hybrid ML recommendation engine.
 
-1. Collaborative filtering (item-based): movies that are rated similarly by the
-   same users are "close" to each other.
-2. Content-based: movies that share genres are "close" to each other.
-
-A hybrid score blends the two, which also helps with movies that have few ratings.
+Uses:
+- TF-IDF content vectors from title + genres + optional metadata
+- Item-based collaborative filtering from user ratings
+- Genre similarity
+- Bayesian-style popularity prior
+- Natural-language query scoring for the AI layer
 """
 from pathlib import Path
-
+import os, re, json
 import numpy as np
 import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 DATA_DIR = Path(__file__).parent / "data"
-
 
 class MovieRecommender:
     def __init__(self, movies_path=None, ratings_path=None):
         movies_path = movies_path or DATA_DIR / "movies.csv"
         ratings_path = ratings_path or DATA_DIR / "ratings.csv"
         self.movies, self.ratings = self._load_and_clean(movies_path, ratings_path)
-        self._build_matrices()
+        self._build_models()
 
-    # ---------- Step 1 & 2: load, clean, build user-item matrix ----------
     @staticmethod
     def _load_and_clean(movies_path, ratings_path):
         movies = pd.read_csv(movies_path)
         ratings = pd.read_csv(ratings_path)
-
-        movies = movies.drop_duplicates("movieId").dropna(subset=["title"])
-        # MovieLens style "Matrix, The (1999)" -> "The Matrix (1999)"
-        movies["title"] = movies["title"].str.replace(r"^(.*), (The|A|An) (\(\d{4}\))$", r"\2 \1 \3", regex=True)
+        movies = movies.drop_duplicates("movieId").dropna(subset=["title"]).copy()
+        movies["title"] = movies["title"].astype(str).str.replace(
+            r"^(.*), (The|A|An) (\(\d{4}\))$", r"\2 \1 \3", regex=True
+        )
         movies = movies.drop_duplicates("title")
         movies["genres"] = movies["genres"].fillna("").replace("(no genres listed)", "")
         if "poster_path" not in movies:
             movies["poster_path"] = ""
-        movies["poster_path"] = movies["poster_path"].fillna("")
+        movies["poster_path"] = movies["poster_path"].fillna("").astype(str)
         ratings = ratings.dropna().drop_duplicates(["userId", "movieId"])
         ratings = ratings[ratings["rating"].between(0.5, 5)]
         ratings = ratings[ratings["movieId"].isin(movies["movieId"])]
         return movies.reset_index(drop=True), ratings.reset_index(drop=True)
 
-    def _build_matrices(self):
-        # rows = movies, columns = users, values = rating (0 = not rated)
-        self.item_user = (
-            self.ratings.pivot_table(index="movieId", columns="userId", values="rating")
-            .reindex(self.movies["movieId"])
-            .fillna(0)
-        )
-        # Mean-center per user so a harsh rater's "3" and a generous rater's "5" compare fairly
-        user_means = self.ratings.groupby("userId")["rating"].mean()
-        centered = self.item_user.sub(user_means.reindex(self.item_user.columns), axis=1).where(self.item_user > 0, 0)
-
+    def _build_models(self):
         ids = self.movies["movieId"].values
+        # Collaborative filtering: mean-centred item/user matrix.
+        item_user = self.ratings.pivot_table(index="movieId", columns="userId", values="rating") \
+            .reindex(ids).fillna(0)
+        user_means = self.ratings.groupby("userId")["rating"].mean()
+        centered = item_user.sub(user_means.reindex(item_user.columns), axis=1).where(item_user > 0, 0)
         self.cf_sim = pd.DataFrame(cosine_similarity(centered.values), index=ids, columns=ids)
 
-        # Content similarity from one-hot genres
+        # Content ML: TF-IDF over movie title + genres. This is stronger than genres alone
+        # while staying lightweight enough for Render's free tier.
+        text = (self.movies["title"].str.replace(r"\(\d{4}\)", "", regex=True) + " " +
+                self.movies["genres"].str.replace("|", " ", regex=False)).str.lower()
+        self.vectorizer = TfidfVectorizer(stop_words="english", ngram_range=(1, 2), min_df=1, sublinear_tf=True)
+        self.content_matrix = self.vectorizer.fit_transform(text)
+        self.content_sim = cosine_similarity(self.content_matrix)
+        self.content_sim_df = pd.DataFrame(self.content_sim, index=ids, columns=ids)
+
         genre_matrix = self.movies["genres"].str.get_dummies(sep="|")
         self.genre_sim = pd.DataFrame(cosine_similarity(genre_matrix.values), index=ids, columns=ids)
 
@@ -67,64 +67,95 @@ class MovieRecommender:
 
         stats = self.ratings.groupby("movieId")["rating"].agg(avg_rating="mean", num_ratings="count")
         self.movies = self.movies.merge(stats, on="movieId", how="left")
+        self.movies["avg_rating"] = self.movies["avg_rating"].fillna(0.0)
+        self.movies["num_ratings"] = self.movies["num_ratings"].fillna(0).astype(int)
+        # A smooth popularity score prevents one 5.0-rated movie with one vote from dominating.
+        C = float(self.ratings["rating"].mean()) if not self.ratings.empty else 3.5
+        m = max(float(self.movies["num_ratings"].quantile(0.65)), 1.0)
+        self.movies["quality"] = (
+            (self.movies["num_ratings"] / (self.movies["num_ratings"] + m)) * self.movies["avg_rating"] +
+            (m / (self.movies["num_ratings"] + m)) * C
+        )
+        self.movies["popularity"] = np.log1p(self.movies["num_ratings"])
+        self.movies["popularity"] = self.movies["popularity"] / max(float(self.movies["popularity"].max()), 1.0)
 
-    # ---------- Step 3 & 4: similarity + recommendation functions ----------
-    def _combined_sim(self, alpha):
-        """alpha = weight for collaborative filtering; (1 - alpha) for genres."""
-        # clip at 0: "dissimilar" shouldn't count as evidence in either direction
-        return alpha * self.cf_sim.clip(lower=0) + (1 - alpha) * self.genre_sim
+    def _combined_sim(self, alpha=0.5):
+        alpha = float(np.clip(alpha, 0, 1))
+        # Content gets the largest share; CF is still useful when rating overlap exists.
+        return 0.50 * self.content_sim_df + 0.30 * self.genre_sim + 0.20 * self.cf_sim.clip(lower=0) if alpha == 0.5 else ((1-alpha)*self.content_sim_df + 0.25*(1-alpha)*self.genre_sim + alpha*self.cf_sim.clip(lower=0))
 
     def similar_movies(self, title, n=5, alpha=0.5):
-        """Movies most similar to a given title."""
         if title not in self.title_to_id:
             raise ValueError(f"'{title}' not found in dataset")
         mid = self.title_to_id[title]
-        scores = self._combined_sim(alpha)[mid].drop(mid).sort_values(ascending=False).head(n)
-        return self._format(scores)
+        sim = self._combined_sim(alpha)
+        scores = sim[mid].drop(mid)
+        # Small quality prior breaks ties without overwhelming similarity.
+        q = self.movies.set_index("movieId")["quality"]
+        scores = scores + 0.025 * (q.reindex(scores.index).fillna(0) / 5.0)
+        return self._format(scores.sort_values(ascending=False).head(n))
 
     def recommend_for_ratings(self, my_ratings: dict, n=5, alpha=0.5):
-        """
-        Recommend for a new user.
-        my_ratings: {"Inception": 5, "Toy Story": 2, ...}
-        Score of candidate = similarity-weighted average of the user's ratings.
-        """
         sim = self._combined_sim(alpha)
-        liked = {self.title_to_id[t]: r for t, r in my_ratings.items() if t in self.title_to_id}
+        liked = {self.title_to_id[t]: float(r) for t, r in my_ratings.items() if t in self.title_to_id}
         if not liked:
             return pd.DataFrame(columns=["title", "genres", "score", "avg_rating", "poster_path"])
-
         ids = list(liked)
-        weights = np.array([liked[i] - 2.5 for i in ids])  # >2.5 pulls up, <2.5 pushes down
+        weights = np.array([liked[i] - 2.5 for i in ids])
         S = sim.loc[:, ids].values
-        # "+ 1" shrinks scores for movies with weak evidence (only faintly similar to what you rated)
-        scores = S @ weights / (S.sum(axis=1) + 1.0)
-        scores = pd.Series(scores, index=sim.index).drop(ids)  # don't recommend already-rated
+        scores = S @ weights / (np.abs(S).sum(axis=1) + 1.0)
+        scores = pd.Series(scores, index=sim.index).drop(ids)
+        quality = self.movies.set_index("movieId")["quality"]
+        scores += 0.04 * ((quality.reindex(scores.index).fillna(0) - 2.5) / 2.5)
+        return self._format(scores.sort_values(ascending=False).head(n))
+
+    def recommend_for_prompt(self, prompt, n=8, parsed=None):
+        """Rank catalogue against a natural-language preference/query."""
+        parsed = parsed or {}
+        query_parts = [prompt]
+        query_parts += parsed.get("genres", [])
+        query_parts += parsed.get("keywords", [])
+        query_parts += parsed.get("mood", []) if isinstance(parsed.get("mood"), list) else [parsed.get("mood", "")]
+        query = " ".join(str(x) for x in query_parts if x).lower()
+        qv = self.vectorizer.transform([query])
+        content_scores = cosine_similarity(qv, self.content_matrix).ravel()
+        scores = pd.Series(content_scores, index=self.movies.movieId.values)
+
+        # Seed titles supplied by the AI layer: blend their learned neighbourhoods.
+        seeds = parsed.get("seed_titles", []) or []
+        valid = [self.title_to_id[t] for t in seeds if t in self.title_to_id]
+        if valid:
+            seed_sim = self.content_sim_df.loc[:, valid].mean(axis=1)
+            scores = 0.70 * scores + 0.30 * seed_sim
+
+        genres = [str(g).lower() for g in (parsed.get("genres", []) or [])]
+        if genres:
+            gscore = self.movies["genres"].str.lower().apply(lambda x: sum(g in x for g in genres) / len(genres)).values
+            scores += 0.18 * pd.Series(gscore, index=scores.index)
+
+        negative = [str(x).lower() for x in (parsed.get("avoid_genres", []) or [])]
+        if negative:
+            penalty = self.movies["genres"].str.lower().apply(lambda x: sum(g in x for g in negative)).values
+            scores -= 0.20 * pd.Series(np.minimum(penalty, 1), index=scores.index)
+
+        quality = self.movies.set_index("movieId")["quality"]
+        scores += 0.025 * ((quality.reindex(scores.index).fillna(0) - 3.0) / 2.0)
         return self._format(scores.sort_values(ascending=False).head(n))
 
     def recommend_for_user(self, user_id, n=5, alpha=0.5):
-        """Recommend for an existing user in the ratings data."""
         user_ratings = self.ratings[self.ratings["userId"] == user_id]
         if user_ratings.empty:
             raise ValueError(f"User {user_id} not found")
         as_dict = {self.id_to_title[m]: r for m, r in zip(user_ratings["movieId"], user_ratings["rating"])}
         return self.recommend_for_ratings(as_dict, n=n, alpha=alpha)
 
-    # ---------- Step 5: clean output ----------
-    def _format(self, scores: pd.Series):
+    def _format(self, scores):
         out = self.movies.set_index("movieId").loc[scores.index, ["title", "genres", "avg_rating", "poster_path"]].copy()
-        out["score"] = scores.round(3).values
+        out["score"] = np.asarray(scores.round(3))
         out["avg_rating"] = out["avg_rating"].round(2)
         return out[["title", "genres", "score", "avg_rating", "poster_path"]].reset_index(drop=True)
 
-
-# ---------- Step 6: test with different inputs ----------
 if __name__ == "__main__":
     rec = MovieRecommender()
-    pd.set_option("display.width", 120)
-    popular = rec.movies.sort_values("num_ratings", ascending=False)["title"].tolist()
-    print(f"{len(rec.movies)} movies, {rec.ratings['userId'].nunique()} users\n")
-    for t in popular[:2]:
-        print(f"=== Because you liked '{t}' ===")
-        print(rec.similar_movies(t).drop(columns="poster_path"), "\n")
-    print("=== Existing user #1 ===")
-    print(rec.recommend_for_user(1).drop(columns="poster_path"))
+    print(f"{len(rec.movies)} movies, {rec.ratings['userId'].nunique()} users")
+    print(rec.similar_movies("Inception (2010)"))
