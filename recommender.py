@@ -32,6 +32,13 @@ class MovieRecommender:
         ratings = pd.read_csv(ratings_path)
 
         movies = movies.drop_duplicates("movieId").dropna(subset=["title"])
+        # MovieLens style "Matrix, The (1999)" -> "The Matrix (1999)"
+        movies["title"] = movies["title"].str.replace(r"^(.*), (The|A|An) (\(\d{4}\))$", r"\2 \1 \3", regex=True)
+        movies = movies.drop_duplicates("title")
+        movies["genres"] = movies["genres"].fillna("").replace("(no genres listed)", "")
+        if "poster_path" not in movies:
+            movies["poster_path"] = ""
+        movies["poster_path"] = movies["poster_path"].fillna("")
         ratings = ratings.dropna().drop_duplicates(["userId", "movieId"])
         ratings = ratings[ratings["rating"].between(0.5, 5)]
         ratings = ratings[ratings["movieId"].isin(movies["movieId"])]
@@ -46,10 +53,7 @@ class MovieRecommender:
         )
         # Mean-center per user so a harsh rater's "3" and a generous rater's "5" compare fairly
         user_means = self.ratings.groupby("userId")["rating"].mean()
-        centered = self.item_user.copy()
-        for u in centered.columns:
-            mask = centered[u] > 0
-            centered.loc[mask, u] -= user_means[u]
+        centered = self.item_user.sub(user_means.reindex(self.item_user.columns), axis=1).where(self.item_user > 0, 0)
 
         ids = self.movies["movieId"].values
         self.cf_sim = pd.DataFrame(cosine_similarity(centered.values), index=ids, columns=ids)
@@ -87,7 +91,7 @@ class MovieRecommender:
         sim = self._combined_sim(alpha)
         liked = {self.title_to_id[t]: r for t, r in my_ratings.items() if t in self.title_to_id}
         if not liked:
-            return pd.DataFrame(columns=["title", "genres", "score", "avg_rating"])
+            return pd.DataFrame(columns=["title", "genres", "score", "avg_rating", "poster_path"])
 
         ids = list(liked)
         weights = np.array([liked[i] - 2.5 for i in ids])  # >2.5 pulls up, <2.5 pushes down
@@ -107,28 +111,20 @@ class MovieRecommender:
 
     # ---------- Step 5: clean output ----------
     def _format(self, scores: pd.Series):
-        out = self.movies.set_index("movieId").loc[scores.index, ["title", "genres", "avg_rating"]].copy()
+        out = self.movies.set_index("movieId").loc[scores.index, ["title", "genres", "avg_rating", "poster_path"]].copy()
         out["score"] = scores.round(3).values
         out["avg_rating"] = out["avg_rating"].round(2)
-        return out[["title", "genres", "score", "avg_rating"]].reset_index(drop=True)
+        return out[["title", "genres", "score", "avg_rating", "poster_path"]].reset_index(drop=True)
 
 
 # ---------- Step 6: test with different inputs ----------
 if __name__ == "__main__":
     rec = MovieRecommender()
     pd.set_option("display.width", 120)
-
-    print("=== Because you liked 'The Dark Knight' ===")
-    print(rec.similar_movies("The Dark Knight"), "\n")
-
-    print("=== Because you liked 'Toy Story' ===")
-    print(rec.similar_movies("Toy Story"), "\n")
-
-    print("=== New user: loves romance, dislikes horror ===")
-    print(rec.recommend_for_ratings({"Titanic": 5, "The Notebook": 5, "Get Out": 1, "The Conjuring": 1}), "\n")
-
-    print("=== New user: loves sci-fi action ===")
-    print(rec.recommend_for_ratings({"The Matrix": 5, "Inception": 5, "Toy Story": 2}), "\n")
-
+    popular = rec.movies.sort_values("num_ratings", ascending=False)["title"].tolist()
+    print(f"{len(rec.movies)} movies, {rec.ratings['userId'].nunique()} users\n")
+    for t in popular[:2]:
+        print(f"=== Because you liked '{t}' ===")
+        print(rec.similar_movies(t).drop(columns="poster_path"), "\n")
     print("=== Existing user #1 ===")
-    print(rec.recommend_for_user(1))
+    print(rec.recommend_for_user(1).drop(columns="poster_path"))
