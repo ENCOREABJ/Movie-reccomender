@@ -10,7 +10,16 @@ engine = MovieRecommender()  # loaded once at startup
 @app.get("/")
 def home():
     movies = engine.movies.fillna({"avg_rating": 0, "num_ratings": 0}).sort_values("title")
-    return render_template("index.html", movies=movies.rename(columns={"num_ratings": "n"})[["title", "genres", "n", "poster_path"]].fillna({"n": 0}).to_dict("records"))
+    return render_template("index.html", movies=movies.rename(columns={"num_ratings": "n"})[["title", "genres", "n", "avg_rating", "poster_path"]].fillna({"n": 0}).to_dict("records"))
+
+
+@app.get("/api/similar")
+def similar():
+    title = request.args.get("title", "")
+    if title not in engine.title_to_id:
+        return jsonify(results=[])
+    df = engine.similar_movies(title, n=12).fillna(0)
+    return jsonify(results=df.to_dict("records"))
 
 
 @app.post("/api/recommend")
