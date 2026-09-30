@@ -3,186 +3,241 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CineMatch: find your next movie</title>
+<title>CineMind: movie picks made for you</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0d0d0d;--nav:#000;--card:#1a1a1a;--line:#2e2e2e;--ink:#fff;--muted:#a3a3a3;--gold:#F5C518;--blue:#5799EF;box-sizing:border-box}
+:root{--bg:#141414;--card:#1f1f1f;--red:#E50914;--ink:#fff;--muted:#b3b3b3;--line:#333;box-sizing:border-box}
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 Roboto,system-ui,sans-serif}
 button{font:inherit;color:inherit;cursor:pointer}
-:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
-.nav{position:sticky;top:0;z-index:20;background:var(--nav);border-bottom:1px solid var(--line);display:flex;gap:16px;align-items:center;padding:10px 20px}
-.logo{background:var(--gold);color:#000;font-weight:900;font-size:1.15rem;letter-spacing:-.01em;padding:2px 10px;border-radius:5px;white-space:nowrap}
-.search{position:relative;flex:1;max-width:560px}
-.search input{width:100%;padding:10px 14px;border-radius:6px;border:0;background:#fff;color:#000;font:inherit}
-.search ul{position:absolute;left:0;right:0;top:100%;margin:6px 0 0;padding:4px;list-style:none;background:#fff;color:#000;border-radius:6px;max-height:280px;overflow:auto}
-.search ul[hidden]{display:none}
+:focus-visible{outline:3px solid #fff;outline-offset:2px}
+[hidden]{display:none!important}
+.nav{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;gap:18px;align-items:center;padding:14px 4%;background:linear-gradient(#000c,transparent);transition:background .3s}
+.nav.solid{background:#000}
+.logo{color:var(--red);font-weight:900;font-size:1.5rem;letter-spacing:.04em}
+.search{position:relative;flex:1;max-width:420px;margin-left:auto}
+.search input{width:100%;padding:9px 14px;border-radius:4px;border:1px solid #666;background:#000a;color:#fff;font:inherit}
+.search ul{position:absolute;left:0;right:0;top:100%;margin:6px 0 0;padding:4px;list-style:none;background:#181818;border:1px solid var(--line);border-radius:6px;max-height:280px;overflow:auto}
 .search li{padding:9px 10px;border-radius:4px;cursor:pointer;display:flex;justify-content:space-between;gap:10px}
-.search li:hover,.search li.active{background:#f2f2f2}
-.search small{color:#666}
-.hero{padding:44px 20px 28px;background:radial-gradient(900px 300px at 15% 0,#2b2405 0,transparent 70%),var(--bg)}
-.hero h1{margin:0;font-size:clamp(1.9rem,5vw,3rem);font-weight:900;letter-spacing:-.02em}
-.hero p{margin:10px 0 18px;color:var(--muted);max-width:56ch}
-.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--muted)}
-.chips button{background:none;border:1px solid #444;border-radius:999px;padding:6px 14px}
-.chips button:hover{border-color:var(--gold);color:var(--gold)}
-section.row{padding:8px 20px 20px}
-.row h2{font-size:1.3rem;margin:14px 0 12px;padding-left:12px;border-left:4px solid var(--gold);display:flex;justify-content:space-between;align-items:center;gap:12px}
-.row h2 label{font-size:.85rem;font-weight:400;color:var(--muted);display:flex;gap:8px;align-items:center}
-.row h2 input{accent-color:var(--gold);width:130px}
-.scroll{display:flex;gap:14px;overflow-x:auto;padding:4px 2px 14px;scroll-snap-type:x proximity;list-style:none;margin:0}
-.card{flex:0 0 172px;background:var(--card);border-radius:8px;overflow:hidden;scroll-snap-align:start;display:flex;flex-direction:column}
-.card.small{flex-basis:140px}
-.poster{position:relative;aspect-ratio:2/3;display:flex;flex-direction:column;justify-content:flex-end;padding:12px;overflow:hidden}
-.poster .em{position:absolute;top:14px;left:0;right:0;text-align:center;font-size:2.6rem;opacity:.9}
-.poster b{font-weight:900;font-size:1.05rem;line-height:1.1;text-shadow:0 2px 8px #000a}
+.search li:hover,.search li.active{background:#333}.search small{color:var(--muted)}
+.hero{position:relative;min-height:min(80vh,640px);display:flex;align-items:flex-end;overflow:hidden}
+.hbg{position:absolute;inset:-30px;background:#222 center/cover;filter:blur(26px) brightness(.5);transform:scale(1.1);transition:opacity .5s}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,var(--bg) 3%,transparent 55%),linear-gradient(to right,#000b,transparent 70%)}
+.hero-in{position:relative;z-index:2;width:100%;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;padding:120px 4% 44px}
+.hero-in .txt{max-width:560px;transition:opacity .5s}.fade{opacity:0}
+.kicker{color:var(--red);font-weight:700;letter-spacing:.12em;font-size:.8rem;margin:0 0 6px}
+.hero h1{margin:0;font-size:clamp(2rem,6vw,3.6rem);font-weight:900;line-height:1.05}
+.meta{color:var(--muted);margin:10px 0 16px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:0;border-radius:4px;padding:10px 22px;font-weight:700;background:#6d6d6eb3}
+.btn.play{background:#fff;color:#000}
+.hposter{width:200px;flex:none;border-radius:8px;overflow:hidden;box-shadow:0 20px 60px #000a;display:none}
+@media(min-width:760px){.hposter{display:block}}
+.quick{padding:6px 4% 0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--muted)}
+.quick button{background:none;border:1px solid #555;border-radius:999px;padding:5px 14px}.quick button:hover{border-color:#fff;color:#fff}
+.row{padding:4px 4%}
+.row h2{font-size:1.2rem;font-weight:700;margin:18px 0 6px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.row label{font-size:.8rem;font-weight:400;color:var(--muted);display:flex;gap:8px;align-items:center}
+.row input[type=range]{accent-color:var(--red);width:120px}
+.wrap{position:relative}
+.scroll{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;list-style:none;margin:0;padding:12px 2px 28px;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.card{flex:0 0 150px;scroll-snap-align:start;transition:transform .2s}
+@media(min-width:760px){.card{flex-basis:176px}}
+.card:hover,.card:focus-within{transform:scale(1.07);z-index:3}
+.cbtn{display:block;width:100%;padding:0;border:0;background:none;border-radius:6px;overflow:hidden;position:relative;text-align:left}
+.ov{position:absolute;inset:auto 0 0;padding:28px 8px 8px;background:linear-gradient(transparent,#000f);opacity:0;transition:opacity .2s;display:flex;flex-direction:column}
+.card:hover .ov,.cbtn:focus-visible .ov{opacity:1}.ov b{line-height:1.2}.ov small{color:#46d369}
+@media(hover:none){.ov{opacity:1}}
+.skel{aspect-ratio:2/3;border-radius:6px;background:linear-gradient(100deg,#222 30%,#2e2e2e 50%,#222 70%) 0 0/300% 100%;animation:sh 1.2s infinite}
+@keyframes sh{to{background-position:-300% 0}}
+.arr{position:absolute;top:12px;bottom:28px;width:4%;min-width:34px;border:0;background:#000a;font-size:2rem;z-index:4;opacity:0;transition:opacity .2s}
+.wrap:hover .arr{opacity:1}.arr.l{left:-4%}.arr.r{right:-4%}
+@media(hover:none){.arr{display:none}}
+.poster{position:relative;aspect-ratio:2/3;display:flex;flex-direction:column;justify-content:flex-end;padding:10px;overflow:hidden}
 .poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .poster.has b,.poster.has .em{display:none}
-.poster .bar,.rm{z-index:2}
-.poster .bar{position:absolute;left:0;bottom:0;height:4px;background:var(--gold);width:0;transition:width .5s}
-.info{padding:10px 10px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
-.rate{color:var(--gold);font-weight:700}.rate span{color:var(--muted);font-weight:400}
-.t{font-weight:500;line-height:1.25}.g{color:var(--muted);font-size:.8rem}
-.add{margin-top:auto;background:#2b2b2b;border:0;border-radius:6px;padding:7px;color:var(--blue);font-weight:500}
-.add:hover{background:#383838}
-.stars{display:flex;align-items:center}
-.stars button{background:none;border:0;padding:1px;font-size:1.15rem;color:#4a4a4a;line-height:1}
-.stars button.on{color:var(--gold)}
-.rm{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:0;background:#000b;color:#fff}
-.msg{color:var(--muted);padding:0 2px}.msg.err{color:#ff7b7b}
-footer{padding:24px 20px 48px;color:#6b6b6b;font-size:.85rem}
-@media(prefers-reduced-motion:reduce){.poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.poster.has b,.poster.has .em{display:none}
-.poster .bar,.rm{z-index:2}
-.poster .bar{transition:none}}
-@media(max-width:560px){.logo{font-size:1rem}.nav{padding:10px 12px}.card{flex-basis:150px}}
+.poster .em{position:absolute;top:14px;left:0;right:0;text-align:center;font-size:2.4rem}
+.poster b{font-weight:900;line-height:1.1;text-shadow:0 2px 8px #000a}
+.msg{color:var(--muted)}.msg.err{color:#ff7b7b}
+dialog{width:min(860px,94vw);max-height:90vh;border:0;border-radius:10px;background:#181818;color:#fff;padding:0;overflow:auto}
+dialog::backdrop{background:#000c}
+.x{position:sticky;top:8px;float:right;margin:8px;width:36px;height:36px;border-radius:50%;border:0;background:#000b;font-size:1.4rem;z-index:5}
+.dbody{display:flex;gap:22px;padding:28px 28px 8px;flex-wrap:wrap}
+.dp{width:190px;flex:none;border-radius:8px;overflow:hidden}
+.di{flex:1;min-width:220px}.di h2{margin:0;font-size:1.8rem;font-weight:900}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.tags span{background:#333;border-radius:4px;padding:2px 9px;font-size:.8rem}
+.stars{display:inline-flex}.stars button{background:none;border:0;padding:2px;font-size:1.9rem;line-height:1;color:#4a4a4a}.stars button.on{color:#f5c518}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;margin-left:10px}
+dialog h3{padding:0 28px;margin:14px 0 0}#dsim{padding:0 28px 20px}#dsim .arr{display:none}
+footer{padding:28px 4% 48px;color:#777;font-size:.85rem}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<nav class="nav">
-  <span class="logo">CineMatch</span>
+<nav class="nav" id="nav">
+  <span class="logo">CINEMIND</span>
   <div class="search">
-    <input id="q" type="text" placeholder="Search movies to rate" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="suggest" aria-label="Search movies to rate">
+    <input id="q" type="text" placeholder="Search movies" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="suggest" aria-label="Search movies">
     <ul id="suggest" role="listbox" hidden></ul>
   </div>
 </nav>
 
 <header class="hero">
-  <h1>Find your next favorite movie</h1>
-  <p>Rate a few movies you've watched. We compare them with what thousands of other viewers rated and the genres they share.</p>
-  <div class="chips" id="examples">Try a taste profile:</div>
+  <div class="hbg" id="hbg"></div>
+  <div class="hero-in">
+    <div class="txt" id="htxt">
+      <p class="kicker">FEATURED</p>
+      <h1 id="ht"></h1>
+      <p class="meta" id="hm"></p>
+      <div class="btns"><button class="btn play" id="hb1" type="button">More info</button><button class="btn" id="hb2" type="button">+ I've seen this</button></div>
+    </div>
+    <div class="hposter" id="hp"></div>
+  </div>
 </header>
 
-<section class="row" aria-labelledby="h-mine">
-  <h2 id="h-mine">Your ratings</h2>
-  <p class="msg" id="mine-empty">Search for a movie above or pick a taste profile to get started.</p>
-  <ul class="scroll" id="mine"></ul>
-</section>
+<div class="quick" id="examples">New here? Try a taste profile:</div>
+<main>
+  <div id="mineRow"></div>
+  <section class="row" id="picksRow" hidden aria-live="polite">
+    <h2>Top picks for you <label for="alpha">Genres <input id="alpha" type="range" min="0" max="1" step="0.1" value="0.5"> Viewer ratings</label></h2>
+    <div id="picksBody"></div>
+  </section>
+  <div id="rows"></div>
+</main>
 
-<section class="row" aria-labelledby="h-picks" aria-live="polite">
-  <h2 id="h-picks">Top picks for you
-    <label for="alpha">Genres <input id="alpha" type="range" min="0" max="1" step="0.1" value="0.5"> Viewer ratings</label>
-  </h2>
-  <p class="msg" id="picks-msg">Rate at least one movie and your picks will show up here.</p>
-  <ul class="scroll" id="results"></ul>
-</section>
-<footer>CineMatch is a student project. Recommendations use cosine similarity on ratings and genres.<br>Poster images come from OMDb and TMDB. This product is not endorsed or certified by TMDB.</footer>
+<dialog id="dlg" aria-labelledby="dt">
+  <button class="x" id="dx" type="button" aria-label="Close">×</button>
+  <div class="dbody">
+    <div class="dp" id="dp"></div>
+    <div class="di"><h2 id="dt"></h2><p class="meta" id="dm"></p><div class="tags" id="dtags"></div>
+      <div>Your rating<br><span class="stars" id="dstars"></span><button class="link" id="drm" type="button" hidden>Remove</button></div></div>
+  </div>
+  <h3>More like this</h3><div id="dsim"></div>
+</dialog>
+<footer>CineMind is a student project. Picks use cosine similarity on ratings and genres.<br>Poster images come from OMDb and TMDB. This product is not endorsed or certified by TMDB.</footer>
 
 <script>
 const MOVIES = {{ movies|tojson }};
-const PROFILES = {"Sci-fi fan": ["Sci-Fi", "Romance"], "Romance fan": ["Romance", "Horror"], "Family night": ["Animation", "Horror"]};
-function topIn(genre, k) { return MOVIES.filter(m => m.genres.split("|").includes(genre)).sort((a, b) => b.n - a.n).slice(0, k).map(m => m.title); }
-function profile(like, dislike) {
-  const out = {}; topIn(like, 4).forEach((t, i) => out[t] = i < 2 ? 5 : 4);
-  topIn(dislike, 2).forEach(t => { if (!(t in out)) out[t] = 1; }); return out;
-}
+const byTitle = Object.fromEntries(MOVIES.map(m => [m.title, m]));
+const PROFILES = {"Sci-fi fan": ["Sci-Fi", "Romance"], "Romance fan": ["Romance", "Horror"], "Family night": ["Animation", "Horror"], "Thriller fan": ["Thriller", "Musical"]};
 const EMOJI = {Action:"💥",Adventure:"🧭","Sci-Fi":"🚀",Animation:"🎨",Children:"🧸",Comedy:"😂",Crime:"🕵️",Drama:"🎭",Horror:"👻",Romance:"💘",Thriller:"🔪",Musical:"🎶",Fantasy:"✨"};
 const $ = id => document.getElementById(id);
 const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); kids.forEach(k => e.append(k)); return e; };
-const byTitle = Object.fromEntries(MOVIES.map(m => [m.title, m]));
+const yr = t => (t.match(/\((\d{4})\)$/) || [])[1] || "";
+const nm = t => t.replace(/\s*\(\d{4}\)$/, "");
+const src = m => !m.poster_path ? "" : m.poster_path.startsWith("http") ? m.poster_path : m.poster_path.startsWith("/") ? "https://image.tmdb.org/t/p/w342" + m.poster_path : "";
+const grad = t => { let h = 0; for (const c of t) h = (h * 31 + c.charCodeAt(0)) % 360; return `linear-gradient(160deg,hsl(${h},55%,34%),hsl(${(h + 55) % 360},60%,12%))`; };
 let mine = {}, timer = null;
 
-function poster(title, genres, extra, path) {
-  let h = 0; for (const c of title) h = (h * 31 + c.charCodeAt(0)) % 360;
-  const p = el("div", { className: "poster" }, el("span", { className: "em", textContent: EMOJI[genres.split("|")[0]] || "🎬" }), el("b", { textContent: title }));
-  p.style.background = `linear-gradient(160deg,hsl(${h},55%,34%),hsl(${(h + 55) % 360},60%,12%))`;
-  if (path && (path.startsWith("/") || path.startsWith("http"))) {
-    const img = el("img", { alt: title, loading: "lazy", src: path.startsWith("http") ? path : "https://image.tmdb.org/t/p/w342" + path });
-    img.onload = () => p.classList.add("has"); img.onerror = () => img.remove();
-    p.prepend(img);
-  }
-  if (extra) p.append(extra);
+function poster(m) {
+  const p = el("div", { className: "poster" }, el("span", { className: "em", textContent: EMOJI[m.genres.split("|")[0]] || "🎬" }), el("b", { textContent: nm(m.title) }));
+  p.style.background = grad(m.title);
+  if (src(m)) { const i = el("img", { alt: m.title, loading: "lazy", src: src(m) }); i.onload = () => p.classList.add("has"); i.onerror = () => i.remove(); p.prepend(i); }
   return p;
 }
+function cardEl(m) {
+  const b = el("button", { type: "button", className: "cbtn", ariaLabel: m.title }, poster(m),
+    el("span", { className: "ov" }, el("b", { textContent: nm(m.title) }), el("small", { textContent: "★ " + (m.avg_rating ? m.avg_rating.toFixed(1) : "–") + "   " + yr(m.title) })));
+  b.addEventListener("click", () => openModal(m.title));
+  return el("li", { className: "card" }, b);
+}
+function scroller(items) {
+  const sc = el("ul", { className: "scroll" }, ...items.map(cardEl));
+  const arr = (d, t) => { const a = el("button", { type: "button", className: "arr " + (d < 0 ? "l" : "r"), textContent: t, ariaLabel: d < 0 ? "Scroll left" : "Scroll right" }); a.addEventListener("click", () => sc.scrollBy({ left: d * sc.clientWidth * .85, behavior: "smooth" })); return a; };
+  return el("div", { className: "wrap" }, arr(-1, "‹"), sc, arr(1, "›"));
+}
+const skeleton = () => el("ul", { className: "scroll" }, ...Array.from({ length: 8 }, () => el("li", { className: "card skel" })));
+
+/* browse rows */
+const med = MOVIES.map(m => m.n).sort((a, b) => a - b)[MOVIES.length >> 1];
+const top = (f, k = 14) => MOVIES.filter(f).sort((a, b) => b.n - a.n).slice(0, k);
+const ROWS = [["Popular on CineMind", top(() => true)], ["Top rated", MOVIES.filter(m => m.n >= med).sort((a, b) => b.avg_rating - a.avg_rating).slice(0, 14)],
+  ...["Action", "Comedy", "Romance", "Sci-Fi", "Animation", "Crime", "Horror", "Drama"].map(g => [g + " movies", top(m => m.genres.split("|").includes(g))])].filter(r => r[1].length >= 4);
+$("rows").append(...ROWS.map(([t, items]) => el("section", { className: "row" }, el("h2", { textContent: t }), scroller(items))));
+
+/* hero */
+const pool = MOVIES.filter(src).sort((a, b) => b.n - a.n).slice(0, 12);
+const heroList = pool.length ? pool : top(() => true, 8);
+let hi = Math.floor(Math.random() * heroList.length), feat;
+function setHero(m) {
+  feat = m;
+  $("hbg").style.background = src(m) ? `url("${src(m)}") center/cover` : grad(m.title);
+  $("ht").textContent = nm(m.title);
+  $("hm").textContent = [yr(m.title), m.avg_rating ? "★ " + m.avg_rating.toFixed(1) : "", m.genres.split("|").join(" · ")].filter(Boolean).join("   ");
+  $("hp").replaceChildren(poster(m)); $("hb2").textContent = m.title in mine ? "✓ Rated" : "+ I've seen this";
+}
+setHero(heroList[hi]);
+setInterval(() => {
+  if ($("dlg").open || document.hidden) return;
+  $("htxt").classList.add("fade"); $("hbg").style.opacity = .3;
+  setTimeout(() => { hi = (hi + 1) % heroList.length; setHero(heroList[hi]); $("htxt").classList.remove("fade"); $("hbg").style.opacity = 1; }, 500);
+}, 9000);
+$("hb1").addEventListener("click", () => openModal(feat.title));
+$("hb2").addEventListener("click", () => { mine[feat.title] = 4; update(); $("hb2").textContent = "✓ Rated"; });
+window.addEventListener("scroll", () => $("nav").classList.toggle("solid", scrollY > 40));
 
 /* search */
 const q = $("q"), list = $("suggest");
-function showSuggestions() {
-  const term = q.value.trim().toLowerCase();
-  const hits = MOVIES.filter(m => !(m.title in mine) && (m.title.toLowerCase().includes(term) || m.genres.toLowerCase().includes(term))).slice(0, 7);
-  list.replaceChildren(...hits.map((m, i) => {
-    const li = el("li", { role: "option", className: i === 0 && term ? "active" : "" }, el("span", { textContent: m.title }), el("small", { textContent: m.genres.split("|")[0] }));
-    li.addEventListener("mousedown", e => { e.preventDefault(); add(m.title, 4); });
-    return li;
-  }));
+function suggest() {
+  const t = q.value.trim().toLowerCase();
+  const hits = t ? MOVIES.filter(m => m.title.toLowerCase().includes(t) || m.genres.toLowerCase().includes(t)).slice(0, 7) : [];
+  list.replaceChildren(...hits.map((m, i) => { const li = el("li", { role: "option", className: i ? "" : "active" }, el("span", { textContent: m.title }), el("small", { textContent: m.genres.split("|")[0] })); li.addEventListener("mousedown", e => { e.preventDefault(); q.value = ""; list.hidden = true; openModal(m.title); }); return li; }));
   list.hidden = !hits.length; q.setAttribute("aria-expanded", String(!list.hidden));
 }
-q.addEventListener("input", showSuggestions); q.addEventListener("focus", showSuggestions);
-q.addEventListener("blur", () => { list.hidden = true; });
-q.addEventListener("keydown", e => {
-  if (e.key === "Enter") { const f = list.querySelector("li"); if (f) f.dispatchEvent(new MouseEvent("mousedown")); }
-  if (e.key === "Escape") list.hidden = true;
-});
-function add(title, rating) { mine[title] = rating; q.value = ""; list.hidden = true; renderMine(); refresh(); }
+q.addEventListener("input", suggest); q.addEventListener("blur", () => { list.hidden = true; });
+q.addEventListener("keydown", e => { if (e.key === "Enter") { const f = list.querySelector("li"); if (f) f.dispatchEvent(new MouseEvent("mousedown")); } if (e.key === "Escape") list.hidden = true; });
 
-/* your ratings */
-function renderMine() {
-  const items = Object.entries(mine).map(([title, rating]) => {
-    const rm = el("button", { type: "button", className: "rm", textContent: "×", ariaLabel: `Remove ${title}` });
-    rm.addEventListener("click", () => { delete mine[title]; renderMine(); refresh(); });
-    const stars = el("div", { className: "stars", role: "group", ariaLabel: `Rating for ${title}` });
-    for (let i = 1; i <= 5; i++) {
-      const b = el("button", { type: "button", textContent: "★", className: i <= rating ? "on" : "", ariaLabel: `${i} stars` });
-      b.addEventListener("click", () => { mine[title] = i; renderMine(); refresh(); });
-      stars.append(b);
-    }
-    const pos = poster(title, byTitle[title].genres, rm, byTitle[title].poster_path);
-    return el("li", { className: "card small" }, pos, el("div", { className: "info" }, stars));
-  });
-  $("mine").replaceChildren(...items); $("mine-empty").hidden = items.length > 0;
+/* modal */
+const dlg = $("dlg");
+$("dx").addEventListener("click", () => dlg.close());
+dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+function drawStars(t) {
+  const r = mine[t] || 0;
+  $("dstars").replaceChildren(...[1, 2, 3, 4, 5].map(i => { const b = el("button", { type: "button", textContent: "★", className: i <= r ? "on" : "", ariaLabel: i + " stars" }); b.addEventListener("click", () => { mine[t] = i; drawStars(t); update(); }); return b; }));
+  $("drm").hidden = !r; $("drm").onclick = () => { delete mine[t]; drawStars(t); update(); };
 }
-Object.keys(PROFILES).forEach(n => {
-  const b = el("button", { type: "button", textContent: n });
-  b.addEventListener("click", () => { mine = profile(...PROFILES[n]); renderMine(); refresh(); });
-  $("examples").append(b);
-});
-
-/* picks */
-function refresh() { clearTimeout(timer); timer = setTimeout(fetchPicks, 200); }
-$("alpha").addEventListener("input", refresh);
-async function fetchPicks() {
-  const msg = $("picks-msg"), out = $("results");
-  if (!Object.keys(mine).length) { out.replaceChildren(); msg.hidden = false; msg.className = "msg"; msg.textContent = "Rate at least one movie and your picks will show up here."; return; }
+async function openModal(t) {
+  const m = byTitle[t]; if (!m) return;
+  dlg.dataset.t = t; $("dp").replaceChildren(poster(m)); $("dt").textContent = nm(t);
+  $("dm").textContent = [yr(t), m.avg_rating ? "★ " + m.avg_rating.toFixed(1) + " viewer rating" : "", m.n ? m.n + " ratings" : ""].filter(Boolean).join("  ·  ");
+  $("dtags").replaceChildren(...m.genres.split("|").filter(Boolean).map(g => el("span", { textContent: g })));
+  drawStars(t); $("dsim").replaceChildren(skeleton());
+  if (!dlg.open) dlg.showModal(); dlg.scrollTop = 0;
   try {
-    const res = await fetch("/api/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ratings: mine, alpha: parseFloat($("alpha").value), n: 10 }) });
+    const { results } = await (await fetch("/api/similar?title=" + encodeURIComponent(t))).json();
+    if (dlg.dataset.t === t) $("dsim").replaceChildren(scroller(results.map(x => byTitle[x.title]).filter(Boolean)));
+  } catch (e) { $("dsim").textContent = "Couldn't load similar movies."; }
+}
+
+/* my ratings + picks */
+function update() {
+  const items = Object.keys(mine).map(t => byTitle[t]).filter(Boolean);
+  $("mineRow").replaceChildren(...(items.length ? [el("section", { className: "row" }, el("h2", { textContent: "Your ratings" }), scroller(items))] : []));
+  $("picksRow").hidden = !items.length; if (feat) $("hb2").textContent = feat.title in mine ? "✓ Rated" : "+ I've seen this";
+  clearTimeout(timer); timer = setTimeout(fetchPicks, 250);
+}
+$("alpha").addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(fetchPicks, 250); });
+async function fetchPicks() {
+  if (!Object.keys(mine).length) return;
+  $("picksBody").replaceChildren(skeleton());
+  try {
+    const res = await fetch("/api/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ratings: mine, alpha: parseFloat($("alpha").value), n: 12 }) });
     if (!res.ok) throw new Error(res.status);
     const { results } = await res.json();
-    msg.hidden = true; out.replaceChildren(...results.map(card));
-    requestAnimationFrame(() => out.querySelectorAll(".bar").forEach(b => b.style.width = b.dataset.w));
-  } catch (e) { msg.hidden = false; msg.className = "msg err"; msg.textContent = "Couldn't load picks. Check that the server is running, then try again."; }
+    $("picksBody").replaceChildren(scroller(results.map(x => byTitle[x.title]).filter(Boolean)));
+  } catch (e) { $("picksBody").replaceChildren(el("p", { className: "msg err", textContent: "Couldn't load picks. Check that the server is running, then try again." })); }
 }
-function card(r) {
-  const bar = el("i", { className: "bar" }); bar.dataset.w = Math.round(r.match * 100) + "%";
-  const add_ = el("button", { type: "button", className: "add", textContent: "+ I've seen this" });
-  add_.addEventListener("click", () => add(r.title, 4));
-  return el("li", { className: "card" }, poster(r.title, r.genres, bar, r.poster_path),
-    el("div", { className: "info" },
-      el("div", { className: "rate" }, "★ " + (r.avg_rating ? r.avg_rating.toFixed(1) : "–"), el("span", { textContent: " / 5" })),
-      el("div", { className: "t", textContent: r.title }),
-      el("div", { className: "g", textContent: r.genres.split("|").join(", ") }), add_));
-}
-renderMine();
+const topIn = (g, k) => MOVIES.filter(m => m.genres.split("|").includes(g)).sort((a, b) => b.n - a.n).slice(0, k).map(m => m.title);
+Object.entries(PROFILES).forEach(([name, [like, dislike]]) => {
+  const b = el("button", { type: "button", textContent: name });
+  b.addEventListener("click", () => {
+    mine = {}; topIn(like, 4).forEach((t, i) => mine[t] = i < 2 ? 5 : 4); topIn(dislike, 2).forEach(t => { if (!(t in mine)) mine[t] = 1; });
+    update(); setTimeout(() => $("picksRow").scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+  });
+  $("examples").append(b);
+});
 </script>
 </body>
 </html>
